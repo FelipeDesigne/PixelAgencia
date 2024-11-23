@@ -11,7 +11,7 @@ interface ClientFormData {
   email: string;
   phone: string;
   address: string;
-  status: 'active' | 'inactive';
+  status: 'pending' | 'active' | 'inactive';
   password?: string;
 }
 
@@ -20,7 +20,7 @@ const initialFormData: ClientFormData = {
   email: '',
   phone: '',
   address: '',
-  status: 'active',
+  status: 'pending',
   password: '',
 };
 
@@ -88,6 +88,7 @@ export default function ClientForm() {
         const { password, ...clientData } = formData;
         await setDoc(doc(db, 'clients', userCredential.user.uid), {
           ...clientData,
+          status: 'pending', // Sempre criar novo cliente como pendente
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
@@ -96,6 +97,7 @@ export default function ClientForm() {
         await setDoc(doc(db, 'users', userCredential.user.uid), {
           email: formData.email,
           role: 'client',
+          status: 'pending',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
@@ -217,20 +219,23 @@ export default function ClientForm() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="input-field"
-            >
-              <option value="active">Ativo</option>
-              <option value="inactive">Inativo</option>
-            </select>
-          </div>
+          {id && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="input-field"
+              >
+                <option value="pending">Pendente</option>
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div>

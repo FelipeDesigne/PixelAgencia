@@ -3,6 +3,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import ChangePasswordForm from '../../../components/ChangePasswordForm';
 
 interface ProfileData {
   name: string;
@@ -165,6 +166,10 @@ export default function Profile() {
             </button>
           </div>
         </form>
+      </div>
+
+      <div className="mt-8">
+        <ChangePasswordForm />
       </div>
     </div>
   );

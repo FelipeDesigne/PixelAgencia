@@ -1,20 +1,57 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
+import { db } from '../../lib/firebase';
 import ClientLayout from './components/ClientLayout';
 import OrderList from './components/OrderList';
 import OrderForm from './components/OrderForm';
 import Profile from './components/Profile';
+import PendingApprovalMessage from '../../components/PendingApprovalMessage';
 
 export default function ClientDashboard() {
-  const { userRole } = useAuth();
+  const { user, userRole } = useAuth();
   const navigate = useNavigate();
+  const [status, setStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (userRole !== 'client') {
       navigate('/login');
+      return;
     }
-  }, [userRole, navigate]);
+
+    const checkClientStatus = async () => {
+      if (!user) return;
+
+      try {
+        const clientRef = doc(db, 'clients', user.uid);
+        const clientSnap = await getDoc(clientRef);
+
+        if (clientSnap.exists()) {
+          setStatus(clientSnap.data().status);
+        }
+      } catch (error) {
+        console.error('Error checking client status:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkClientStatus();
+  }, [userRole, user, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (status === 'pending') {
+    return <PendingApprovalMessage />;
+  }
 
   return (
     <ClientLayout>

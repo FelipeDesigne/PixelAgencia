@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { PlusCircle, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, ToggleLeft, ToggleRight, Check, X, AlertCircle } from 'lucide-react';
 import { db } from '../../../lib/firebase';
 import { toast } from 'react-hot-toast';
 
@@ -10,7 +10,7 @@ interface Client {
   name: string;
   email: string;
   phone: string;
-  status: 'active' | 'inactive';
+  status: 'pending' | 'active' | 'inactive';
   deactivationReason?: string;
   createdAt: string;
 }
@@ -84,6 +84,13 @@ export default function ClientList() {
         id: doc.id,
         ...doc.data()
       })) as Client[];
+      
+      // Ordenar clientes: pendentes primeiro, depois ativos, depois inativos
+      clientsData.sort((a, b) => {
+        const order = { pending: 0, active: 1, inactive: 2 };
+        return order[a.status] - order[b.status];
+      });
+      
       setClients(clientsData);
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);
@@ -106,22 +113,25 @@ export default function ClientList() {
     }
   };
 
-  const handleStatusChange = async (client: Client) => {
-    if (client.status === 'active') {
-      setSelectedClient(client);
-      setIsModalOpen(true);
-    } else {
-      try {
-        await updateDoc(doc(db, 'clients', client.id), {
-          status: 'active',
-          deactivationReason: null
-        });
-        toast.success('Cliente ativado com sucesso');
-        fetchClients();
-      } catch (error) {
-        console.error('Erro ao ativar cliente:', error);
-        toast.error('Erro ao ativar cliente');
+  const handleStatusChange = async (client: Client, newStatus: Client['status']) => {
+    try {
+      const updates: any = { status: newStatus };
+      
+      if (newStatus === 'inactive') {
+        setSelectedClient(client);
+        setIsModalOpen(true);
+        return;
+      } else {
+        // Limpar razão de desativação se estiver reativando
+        updates.deactivationReason = null;
       }
+
+      await updateDoc(doc(db, 'clients', client.id), updates);
+      toast.success(`Cliente ${newStatus === 'active' ? 'aprovado' : 'atualizado'} com sucesso`);
+      fetchClients();
+    } catch (error) {
+      console.error('Erro ao atualizar status do cliente:', error);
+      toast.error('Erro ao atualizar status do cliente');
     }
   };
 
@@ -140,6 +150,32 @@ export default function ClientList() {
     } catch (error) {
       console.error('Erro ao desativar cliente:', error);
       toast.error('Erro ao desativar cliente');
+    }
+  };
+
+  const getStatusColor = (status: Client['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'inactive':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: Client['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'Pendente';
+      case 'active':
+        return 'Ativo';
+      case 'inactive':
+        return 'Inativo';
+      default:
+        return status;
     }
   };
 
@@ -204,63 +240,80 @@ export default function ClientList() {
                 clients.map((client) => (
                   <tr key={client.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {client.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {client.email}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {client.phone}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span 
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                            ${client.status === 'active' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'}`}
-                        >
-                          {client.status === 'active' ? 'Ativo' : 'Inativo'}
-                        </span>
-                        {client.deactivationReason && (
-                          <span
-                            className="ml-2 text-gray-400 hover:text-gray-600 cursor-help"
-                            title={`Motivo: ${client.deactivationReason}`}
-                          >
-                            ℹ️
-                          </span>
-                        )}
+                        <div className="text-sm font-medium text-gray-900">
+                          {client.name}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{client.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{client.phone}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(client.status)}`}>
+                        {getStatusText(client.status)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(client.createdAt)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleStatusChange(client)}
-                        className={`mr-2 ${
-                          client.status === 'active' 
-                            ? 'text-green-600 hover:text-green-900' 
-                            : 'text-red-600 hover:text-red-900'
-                        }`}
-                        title={client.status === 'active' ? 'Desativar cliente' : 'Ativar cliente'}
-                      >
-                        {client.status === 'active' ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
-                      </button>
-                      <button
-                        onClick={() => navigate(`/admin/client/edit/${client.id}`)}
-                        className="text-blue-600 hover:text-blue-900 mr-2"
-                        title="Editar cliente"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(client.id, client.name)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Excluir cliente"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                      {client.status === 'pending' ? (
+                        <>
+                          <button
+                            onClick={() => handleStatusChange(client, 'active')}
+                            className="text-green-600 hover:text-green-900"
+                            title="Aprovar cliente"
+                          >
+                            <Check size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleStatusChange(client, 'inactive')}
+                            className="text-red-600 hover:text-red-900"
+                            title="Rejeitar cliente"
+                          >
+                            <X size={18} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleStatusChange(
+                              client,
+                              client.status === 'active' ? 'inactive' : 'active'
+                            )}
+                            className={`${
+                              client.status === 'active'
+                                ? 'text-red-600 hover:text-red-900'
+                                : 'text-green-600 hover:text-green-900'
+                            }`}
+                            title={client.status === 'active' ? 'Desativar cliente' : 'Ativar cliente'}
+                          >
+                            {client.status === 'active' ? (
+                              <ToggleRight size={18} />
+                            ) : (
+                              <ToggleLeft size={18} />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => navigate(`/admin/client/${client.id}`)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Editar cliente"
+                          >
+                            <Edit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(client.id, client.name)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Excluir cliente"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))
