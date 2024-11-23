@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { db, auth } from '../../../lib/firebase';
 import { toast } from 'react-hot-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 interface ClientFormData {
   name: string;
@@ -11,6 +12,7 @@ interface ClientFormData {
   phone: string;
   address: string;
   status: 'active' | 'inactive';
+  password?: string;
 }
 
 const initialFormData: ClientFormData = {
@@ -19,12 +21,14 @@ const initialFormData: ClientFormData = {
   phone: '',
   address: '',
   status: 'active',
+  password: '',
 };
 
 export default function ClientForm() {
   const [formData, setFormData] = useState<ClientFormData>(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -40,7 +44,10 @@ export default function ClientForm() {
       const docRef = doc(db, 'clients', id!);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setFormData(docSnap.data() as ClientFormData);
+        const data = docSnap.data() as ClientFormData;
+        // Remove password from edit form
+        delete data.password;
+        setFormData(data);
       } else {
         toast.error('Cliente não encontrado');
         navigate('/admin');
@@ -58,21 +65,53 @@ export default function ClientForm() {
 
     try {
       if (id) {
+        // Updating existing client
+        const { password, ...clientData } = formData;
         await setDoc(doc(db, 'clients', id), {
-          ...formData,
+          ...clientData,
           updatedAt: new Date().toISOString(),
         });
       } else {
-        await addDoc(collection(db, 'clients'), {
-          ...formData,
+        // Creating new client
+        if (!formData.password) {
+          throw new Error('Senha é obrigatória para novos clientes');
+        }
+
+        // Create Firebase Auth account
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password
+        );
+
+        // Create client document
+        const { password, ...clientData } = formData;
+        await setDoc(doc(db, 'clients', userCredential.user.uid), {
+          ...clientData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+        // Create user document with role
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          email: formData.email,
+          role: 'client',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
       }
+
       toast.success(id ? 'Cliente atualizado com sucesso' : 'Cliente cadastrado com sucesso');
       navigate('/admin');
-    } catch (error) {
-      toast.error('Erro ao salvar cliente');
+    } catch (error: any) {
+      console.error('Error:', error);
+      if (error.code === 'auth/email-already-in-use') {
+        toast.error('Este email já está em uso');
+      } else if (error.code === 'auth/weak-password') {
+        toast.error('A senha deve ter pelo menos 6 caracteres');
+      } else {
+        toast.error(error.message || 'Erro ao salvar cliente');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -134,8 +173,35 @@ export default function ClientForm() {
               onChange={handleChange}
               className="input-field"
               required
+              disabled={!!id}
             />
           </div>
+
+          {!id && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Senha
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="input-field pr-10"
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -192,7 +258,7 @@ export default function ClientForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn-primary"
+            className="btn-primary flex items-center justify-center min-w-[100px]"
           >
             {isSubmitting ? (
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
