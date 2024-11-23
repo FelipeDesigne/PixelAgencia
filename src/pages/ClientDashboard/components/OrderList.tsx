@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
+import { Plus, Eye, Edit } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { PlusCircle, Eye, Edit } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface Order {
   id: string;
@@ -154,7 +154,7 @@ export default function OrderList({ isInactive }: OrderListProps) {
             `}
             disabled={isInactive}
           >
-            <PlusCircle size={20} />
+            <Plus size={20} />
             <span>Novo Pedido</span>
           </button>
         </div>
@@ -162,7 +162,7 @@ export default function OrderList({ isInactive }: OrderListProps) {
         {orders.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <PlusCircle className="w-8 h-8 text-blue-600" />
+              <Plus className="w-8 h-8 text-blue-600" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum pedido encontrado</h3>
             <p className="text-gray-500 mb-4">Comece criando seu primeiro pedido!</p>

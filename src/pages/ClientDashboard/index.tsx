@@ -9,7 +9,7 @@ import OrderForm from './components/OrderForm';
 import Profile from './components/Profile';
 import PendingApprovalMessage from '../../components/PendingApprovalMessage';
 import InactiveAccountMessage from '../../components/InactiveAccountMessage';
-import { AlertTriangle, MessageCircle } from 'react-feather';
+import { AlertTriangle, MessageCircle } from 'lucide-react';
 
 interface ClientData {
   status: string;
