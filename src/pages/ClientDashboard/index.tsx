@@ -1,6 +1,10 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import ClientLayout from './components/ClientLayout';
+import OrderList from './components/OrderList';
+import OrderForm from './components/OrderForm';
+import Profile from './components/Profile';
 
 export default function ClientDashboard() {
   const { userRole } = useAuth();
@@ -13,9 +17,13 @@ export default function ClientDashboard() {
   }, [userRole, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="text-2xl font-bold text-gray-800 mb-8">Client Dashboard</h1>
-      <p className="text-gray-600">Client interface coming soon...</p>
-    </div>
+    <ClientLayout>
+      <Routes>
+        <Route path="/" element={<OrderList />} />
+        <Route path="/order/new" element={<OrderForm />} />
+        <Route path="/order/:id" element={<OrderForm />} />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
+    </ClientLayout>
   );
 }
