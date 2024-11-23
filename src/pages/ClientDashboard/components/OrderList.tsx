@@ -38,8 +38,13 @@ export default function OrderList() {
         id: doc.id,
         ...doc.data()
       })) as Order[];
+      
+      // Ordenar pedidos por data de criação (mais recentes primeiro)
+      ordersData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
       setOrders(ordersData);
     } catch (error) {
+      console.error('Erro ao carregar pedidos:', error);
       toast.error('Erro ao carregar pedidos');
     } finally {
       setIsLoading(false);
@@ -72,6 +77,10 @@ export default function OrderList() {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -85,7 +94,7 @@ export default function OrderList() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Meus Pedidos</h2>
         <button
-          onClick={() => navigate('/client/order/new')}
+          onClick={() => navigate('/client/orders/new')}
           className="btn-primary flex items-center space-x-2"
         >
           <PlusCircle size={20} />
@@ -101,7 +110,7 @@ export default function OrderList() {
           <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum pedido encontrado</h3>
           <p className="text-gray-500 mb-4">Comece criando seu primeiro pedido!</p>
           <button
-            onClick={() => navigate('/client/order/new')}
+            onClick={() => navigate('/client/orders/new')}
             className="btn-primary"
           >
             Criar Pedido
@@ -135,7 +144,7 @@ export default function OrderList() {
                   <tr 
                     key={order.id} 
                     className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/client/order/${order.id}`)}
+                    onClick={() => navigate(`/client/orders/${order.id}`)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
                       {order.title}
@@ -151,10 +160,10 @@ export default function OrderList() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(order.createdAt).toLocaleDateString()}
+                      {formatDate(order.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(order.deliveryDate).toLocaleDateString()}
+                      {formatDate(order.deliveryDate)}
                     </td>
                   </tr>
                 ))}
