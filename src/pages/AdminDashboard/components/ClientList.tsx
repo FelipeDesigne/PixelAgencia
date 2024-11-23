@@ -287,8 +287,8 @@ export default function ClientList() {
                             )}
                             className={`${
                               client.status === 'active'
-                                ? 'text-red-600 hover:text-red-900'
-                                : 'text-green-600 hover:text-green-900'
+                                ? 'text-green-600 hover:text-green-900'
+                                : 'text-red-600 hover:text-red-900'
                             }`}
                             title={client.status === 'active' ? 'Desativar cliente' : 'Ativar cliente'}
                           >
