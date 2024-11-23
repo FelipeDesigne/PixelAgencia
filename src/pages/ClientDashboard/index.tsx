@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import ClientLayout from './components/ClientLayout';
 import OrderList from './components/OrderList';
@@ -19,10 +19,12 @@ export default function ClientDashboard() {
   return (
     <ClientLayout>
       <Routes>
-        <Route path="/" element={<OrderList />} />
-        <Route path="/order/new" element={<OrderForm />} />
-        <Route path="/order/:id" element={<OrderForm />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route index element={<OrderList />} />
+        <Route path="orders" element={<OrderList />} />
+        <Route path="orders/new" element={<OrderForm />} />
+        <Route path="orders/:id" element={<OrderForm />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="*" element={<Navigate to="" replace />} />
       </Routes>
     </ClientLayout>
   );

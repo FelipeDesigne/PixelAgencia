@@ -26,7 +26,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   };
 
   const navItems = [
-    { path: '/client', icon: Package, label: 'Meus Pedidos' },
+    { path: '/client/orders', icon: Package, label: 'Meus Pedidos' },
     { path: '/client/profile', icon: User, label: 'Meu Perfil' },
   ];
 
