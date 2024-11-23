@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Package, User, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -14,8 +15,14 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const location = useLocation();
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
+    try {
+      await signOut();
+      toast.success('Logout realizado com sucesso');
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      toast.error('Erro ao fazer logout');
+    }
   };
 
   const navItems = [
@@ -66,7 +73,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <div className="p-4 border-t">
             <button
               onClick={handleSignOut}
-              className="flex items-center space-x-3 text-gray-600 hover:text-red-600 w-full px-4 py-3 rounded-lg transition-colors"
+              className="flex items-center space-x-3 text-gray-600 hover:text-red-600 w-full px-4 py-3 rounded-lg transition-colors hover:bg-red-50"
             >
               <LogOut size={20} />
               <span>Sair</span>

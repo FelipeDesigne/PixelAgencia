@@ -44,17 +44,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      
       if (user) {
         try {
           const role = await createUserDocument(user);
+          setUser(user);
           setUserRole(role);
         } catch (error) {
           console.error('Error setting up user:', error);
+          setUser(null);
           setUserRole(null);
         }
       } else {
+        setUser(null);
         setUserRole(null);
       }
       
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const role = await createUserDocument(userCredential.user);
+      setUser(userCredential.user);
       setUserRole(role);
     } catch (error: any) {
       console.error('Login error:', error);
@@ -76,9 +78,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await firebaseSignOut(auth);
-    setUser(null);
-    setUserRole(null);
+    try {
+      await firebaseSignOut(auth);
+      setUser(null);
+      setUserRole(null);
+    } catch (error) {
+      console.error('Signout error:', error);
+      throw error;
+    }
   };
 
   return (
