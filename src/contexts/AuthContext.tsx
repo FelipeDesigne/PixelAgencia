@@ -102,27 +102,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const { role, status } = await checkUserStatus(userCredential.user);
-
-      // Se for cliente e estiver pendente ou inativo, não permitir acesso
-      if (role === 'client' && status !== 'active') {
-        await firebaseSignOut(auth);
-        
-        if (status === 'pending') {
-          throw new Error('Sua conta está pendente de aprovação. Por favor, aguarde.');
-        } else if (status === 'inactive') {
-          throw new Error('Sua conta está inativa. Entre em contato com o administrador.');
-        }
-        return;
+      const userDoc = await getDoc(doc(db, 'clients', userCredential.user.uid));
+      
+      if (!userDoc.exists()) {
+        throw new Error('Usuário não encontrado');
       }
 
-      setUser(userCredential.user);
-      setUserRole(role);
+      return userCredential;
     } catch (error: any) {
-      console.error('Login error:', error);
-      throw error;
+      let message = 'Erro ao fazer login';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        message = 'E-mail ou senha incorretos';
+      }
+      throw new Error(message);
+    } finally {
+      setLoading(false);
     }
   };
 

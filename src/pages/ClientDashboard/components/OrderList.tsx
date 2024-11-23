@@ -22,6 +22,10 @@ interface DescriptionModalProps {
   title: string;
 }
 
+interface OrderListProps {
+  isInactive?: boolean;
+}
+
 function DescriptionModal({ isOpen, onClose, description, title }: DescriptionModalProps) {
   if (!isOpen) return null;
 
@@ -53,7 +57,7 @@ function DescriptionModal({ isOpen, onClose, description, title }: DescriptionMo
   );
 }
 
-export default function OrderList() {
+export default function OrderList({ isInactive }: OrderListProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -137,11 +141,18 @@ export default function OrderList() {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-800">Meus Pedidos</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Meus Pedidos</h1>
           <button
-            onClick={() => navigate('/client/orders/new')}
-            className="btn-primary flex items-center space-x-2"
+            onClick={() => navigate(isInactive ? '#' : '/client/orders/new')}
+            className={`
+              inline-flex items-center px-4 py-2 rounded-md text-sm font-medium
+              ${isInactive
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+              }
+            `}
+            disabled={isInactive}
           >
             <PlusCircle size={20} />
             <span>Novo Pedido</span>
@@ -158,6 +169,7 @@ export default function OrderList() {
             <button
               onClick={() => navigate('/client/orders/new')}
               className="btn-primary"
+              disabled={isInactive}
             >
               Criar Pedido
             </button>

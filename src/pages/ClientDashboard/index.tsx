@@ -9,6 +9,7 @@ import OrderForm from './components/OrderForm';
 import Profile from './components/Profile';
 import PendingApprovalMessage from '../../components/PendingApprovalMessage';
 import InactiveAccountMessage from '../../components/InactiveAccountMessage';
+import { AlertTriangle, MessageCircle } from 'react-feather';
 
 interface ClientData {
   status: string;
@@ -60,16 +61,45 @@ export default function ClientDashboard() {
     return <PendingApprovalMessage />;
   }
 
-  if (clientData?.status === 'inactive') {
-    return <InactiveAccountMessage reason={clientData.deactivationReason} />;
-  }
-
   return (
     <ClientLayout>
+      {clientData?.status === 'inactive' && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">
+                <span className="font-medium">Conta Inativa: </span>
+                {clientData.deactivationReason || 'Sua conta está atualmente inativa.'}
+              </p>
+              <button
+                onClick={() => {
+                  const phoneNumber = '14981181568';
+                  const message = 'Olá, gostaria de solicitar a reativação da minha conta na Pixel Agência.';
+                  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                  window.open(whatsappUrl, '_blank');
+                }}
+                className="mt-2 text-sm text-green-600 hover:text-green-800 flex items-center space-x-1"
+              >
+                <MessageCircle size={16} />
+                <span>Entrar em Contato via WhatsApp</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Routes>
-        <Route index element={<OrderList />} />
-        <Route path="orders" element={<OrderList />} />
-        <Route path="orders/new" element={<OrderForm />} />
+        <Route index element={<OrderList isInactive={clientData?.status === 'inactive'} />} />
+        <Route path="orders" element={<OrderList isInactive={clientData?.status === 'inactive'} />} />
+        <Route path="orders/new" element={
+          clientData?.status === 'inactive' ? (
+            <Navigate to="/client" replace />
+          ) : (
+            <OrderForm />
+          )
+        } />
         <Route path="orders/:id" element={<OrderForm />} />
         <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="" replace />} />
