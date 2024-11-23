@@ -3,7 +3,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Eye, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Order {
@@ -15,9 +15,49 @@ interface Order {
   deliveryDate: string;
 }
 
+interface DescriptionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  description: string;
+  title: string;
+}
+
+function DescriptionModal({ isOpen, onClose, description, title }: DescriptionModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="prose max-w-none">
+          <p className="whitespace-pre-wrap">{description}</p>
+        </div>
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function OrderList() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -81,6 +121,11 @@ export default function OrderList() {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
+  const handleShowDescription = (order: Order) => {
+    setSelectedOrder(order);
+    setIsModalOpen(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -90,88 +135,120 @@ export default function OrderList() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Meus Pedidos</h2>
-        <button
-          onClick={() => navigate('/client/orders/new')}
-          className="btn-primary flex items-center space-x-2"
-        >
-          <PlusCircle size={20} />
-          <span>Novo Pedido</span>
-        </button>
-      </div>
-
-      {orders.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <PlusCircle className="w-8 h-8 text-blue-600" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum pedido encontrado</h3>
-          <p className="text-gray-500 mb-4">Comece criando seu primeiro pedido!</p>
+    <>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-800">Meus Pedidos</h2>
           <button
             onClick={() => navigate('/client/orders/new')}
-            className="btn-primary"
+            className="btn-primary flex items-center space-x-2"
           >
-            Criar Pedido
+            <PlusCircle size={20} />
+            <span>Novo Pedido</span>
           </button>
         </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Título
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Descrição
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Data do Pedido
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Prazo de Entrega
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {orders.map((order) => (
-                  <tr 
-                    key={order.id} 
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/client/orders/${order.id}`)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                      {order.title}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 line-clamp-2">
-                        {order.description}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                        {getStatusText(order.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(order.createdAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(order.deliveryDate)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+        {orders.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <PlusCircle className="w-8 h-8 text-blue-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum pedido encontrado</h3>
+            <p className="text-gray-500 mb-4">Comece criando seu primeiro pedido!</p>
+            <button
+              onClick={() => navigate('/client/orders/new')}
+              className="btn-primary"
+            >
+              Criar Pedido
+            </button>
           </div>
-        </div>
-      )}
-    </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Título
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Descrição
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Data do Pedido
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Prazo de Entrega
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {orders.map((order) => (
+                    <tr 
+                      key={order.id} 
+                      className="hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                        {order.title}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="text-sm text-gray-900 line-clamp-2 max-w-md">
+                            {order.description}
+                          </div>
+                          <button
+                            onClick={() => handleShowDescription(order)}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Ver descrição completa"
+                          >
+                            <Eye size={18} />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                          {getStatusText(order.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(order.createdAt)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(order.deliveryDate)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button
+                          onClick={() => navigate(`/client/orders/${order.id}`)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="Editar pedido"
+                        >
+                          <Edit size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <DescriptionModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedOrder(null);
+        }}
+        description={selectedOrder?.description || ''}
+        title={selectedOrder?.title || ''}
+      />
+    </>
   );
 }
