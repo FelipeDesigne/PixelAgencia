@@ -8,11 +8,17 @@ import OrderList from './components/OrderList';
 import OrderForm from './components/OrderForm';
 import Profile from './components/Profile';
 import PendingApprovalMessage from '../../components/PendingApprovalMessage';
+import InactiveAccountMessage from '../../components/InactiveAccountMessage';
+
+interface ClientData {
+  status: string;
+  deactivationReason?: string;
+}
 
 export default function ClientDashboard() {
   const { user, userRole } = useAuth();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<string | null>(null);
+  const [clientData, setClientData] = useState<ClientData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +35,8 @@ export default function ClientDashboard() {
         const clientSnap = await getDoc(clientRef);
 
         if (clientSnap.exists()) {
-          setStatus(clientSnap.data().status);
+          const data = clientSnap.data() as ClientData;
+          setClientData(data);
         }
       } catch (error) {
         console.error('Error checking client status:', error);
@@ -49,8 +56,12 @@ export default function ClientDashboard() {
     );
   }
 
-  if (status === 'pending') {
+  if (clientData?.status === 'pending') {
     return <PendingApprovalMessage />;
+  }
+
+  if (clientData?.status === 'inactive') {
+    return <InactiveAccountMessage reason={clientData.deactivationReason} />;
   }
 
   return (
