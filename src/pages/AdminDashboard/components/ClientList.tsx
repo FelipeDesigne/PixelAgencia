@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { db } from '../../../lib/firebase';
 import { toast } from 'react-hot-toast';
@@ -10,7 +10,7 @@ interface Client {
   name: string;
   email: string;
   phone: string;
-  status: 'active' | 'inactive';
+  status: string;
   createdAt: string;
 }
 
@@ -35,6 +35,18 @@ export default function ClientList() {
       toast.error('Erro ao carregar clientes');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (clientId: string, clientName: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir o cliente ${clientName}?`)) {
+      try {
+        await deleteDoc(doc(db, 'clients', clientId));
+        toast.success('Cliente excluído com sucesso');
+        fetchClients(); // Recarrega a lista após excluir
+      } catch (error) {
+        toast.error('Erro ao excluir cliente');
+      }
     }
   };
 
@@ -118,12 +130,14 @@ export default function ClientList() {
                     <button
                       onClick={() => navigate(`/admin/client/edit/${client.id}`)}
                       className="text-blue-600 hover:text-blue-900 mr-4"
+                      title="Editar cliente"
                     >
                       <Edit size={18} />
                     </button>
                     <button
-                      onClick={() => toast.error('Função em desenvolvimento')}
+                      onClick={() => handleDelete(client.id, client.name)}
                       className="text-red-600 hover:text-red-900"
+                      title="Excluir cliente"
                     >
                       <Trash2 size={18} />
                     </button>
