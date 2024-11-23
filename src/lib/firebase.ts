@@ -3,12 +3,12 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAm-WBZmBbWxhhrUGEoQquzOu9GhrDoAEM",
-  authDomain: "programa-cliente.firebaseapp.com",
-  projectId: "programa-cliente",
-  storageBucket: "programa-cliente.firebasestorage.app",
-  messagingSenderId: "414594954917",
-  appId: "1:414594954917:web:63b96922ab1346e686ff4c"
+  apiKey: "AIzaSyA_cQM_IT673H53Qw164DP29_gOI8TAGdg",
+  authDomain: "pixelagencia-663a1.firebaseapp.com",
+  projectId: "pixelagencia-663a1",
+  storageBucket: "pixelagencia-663a1.firebasestorage.app",
+  messagingSenderId: "942976055229",
+  appId: "1:942976055229:web:e4673039b1733fa43f04d4"
 };
 
 export const app = initializeApp(firebaseConfig);
