@@ -4,7 +4,7 @@ import { doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '../../../lib/firebase';
 import { toast } from 'react-hot-toast';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Drive } from 'lucide-react';
 
 interface ClientFormData {
   name: string;
@@ -13,6 +13,7 @@ interface ClientFormData {
   address: string;
   status: 'pending' | 'active' | 'inactive';
   password?: string;
+  driveLink?: string;
 }
 
 const initialFormData: ClientFormData = {
@@ -22,6 +23,7 @@ const initialFormData: ClientFormData = {
   address: '',
   status: 'pending',
   password: '',
+  driveLink: '',
 };
 
 export default function ClientForm() {
@@ -236,6 +238,26 @@ export default function ClientForm() {
               </select>
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Link do Google Drive
+            </label>
+            <div className="flex items-center space-x-2">
+              <Drive className="w-5 h-5 text-blue-600" />
+              <input
+                type="url"
+                name="driveLink"
+                value={formData.driveLink || ''}
+                onChange={handleChange}
+                placeholder="https://drive.google.com/drive/folders/..."
+                className="input-field"
+              />
+            </div>
+            <p className="mt-1 text-sm text-gray-500">
+              Adicione o link da pasta compartilhada do Google Drive onde os arquivos do cliente serão armazenados.
+            </p>
+          </div>
         </div>
 
         <div>
