@@ -106,9 +106,16 @@ export default function OrderList() {
   const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
     try {
       const orderRef = doc(db, 'orders', orderId);
-      await updateDoc(orderRef, {
+      const updateData: any = {
         status: newStatus
-      });
+      };
+      
+      // If status is completed, add completedAt timestamp
+      if (newStatus === 'completed') {
+        updateData.completedAt = new Date().toISOString();
+      }
+      
+      await updateDoc(orderRef, updateData);
       
       // Atualizar estado local
       setOrders(orders.map(order => 
@@ -117,24 +124,16 @@ export default function OrderList() {
           : order
       ));
       
-      toast.success('Status atualizado com sucesso');
+      if (newStatus === 'completed') {
+        // Remove the order from the list if it's completed
+        setOrders(orders.filter(order => order.id !== orderId));
+        toast.success('Pedido finalizado e movido para arquivados');
+      } else {
+        toast.success('Status atualizado com sucesso');
+      }
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
       toast.error('Erro ao atualizar status');
-    }
-  };
-
-  const handleCompleteOrder = async (orderId: string) => {
-    try {
-      const orderRef = doc(db, 'orders', orderId);
-      await updateDoc(orderRef, {
-        status: 'completed',
-        completedAt: new Date().toISOString()
-      });
-      toast.success('Pedido marcado como concluído');
-    } catch (error) {
-      console.error('Error completing order:', error);
-      toast.error('Erro ao concluir o pedido');
     }
   };
 
@@ -257,16 +256,6 @@ export default function OrderList() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(order.deliveryDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {order.status === 'completed' ? (
-                      <button
-                        onClick={() => handleCompleteOrder(order.id)}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                      >
-                        Concluir
-                      </button>
-                    ) : null}
                   </td>
                 </tr>
               ))}
