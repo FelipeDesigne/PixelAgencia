@@ -221,6 +221,24 @@ export default function ClientForm() {
             />
           </div>
 
+          {id && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="input-field"
+              >
+                <option value="pending">Pendente</option>
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Link do Google Drive
@@ -242,24 +260,6 @@ export default function ClientForm() {
               Adicione o link da pasta compartilhada do Google Drive.
             </p>
           </div>
-
-          {id && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="input-field"
-              >
-                <option value="pending">Pendente</option>
-                <option value="active">Ativo</option>
-                <option value="inactive">Inativo</option>
-              </select>
-            </div>
-          )}
         </div>
 
         <div>
