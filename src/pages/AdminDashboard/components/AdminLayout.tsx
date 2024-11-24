@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Users, Package, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../../../lib/firebase';
+import OrderNotification from '../../../components/OrderNotification';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -12,6 +15,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [unviewedOrdersCount, setUnviewedOrdersCount] = useState(0);
+
+  useEffect(() => {
+    // Monitora pedidos não visualizados
+    const ordersRef = collection(db, 'orders');
+    const unviewedQuery = query(ordersRef, where('viewed', '==', false));
+
+    const unsubscribe = onSnapshot(unviewedQuery, (snapshot) => {
+      setUnviewedOrdersCount(snapshot.docs.length);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -20,7 +36,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const navItems = [
     { path: '/admin', icon: Users, label: 'Clientes' },
-    { path: '/admin/orders', icon: Package, label: 'Pedidos' },
+    { 
+      path: '/admin/orders', 
+      label: 'Pedidos',
+      customIcon: <OrderNotification count={unviewedOrdersCount} />
+    },
   ];
 
   return (
@@ -56,7 +76,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       ? 'bg-blue-50 text-blue-600' 
                       : 'text-gray-600 hover:bg-gray-50'}`}
                 >
-                  <Icon size={20} />
+                  {item.customIcon ? item.customIcon : Icon && <Icon size={20} />}
                   <span>{item.label}</span>
                 </Link>
               );
