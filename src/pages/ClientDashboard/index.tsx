@@ -1,109 +1,115 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import ClientLayout from './components/ClientLayout';
-import OrderList from './components/OrderList';
-import OrderForm from './components/OrderForm';
-import Profile from './components/Profile';
-import PendingApprovalMessage from '../../components/PendingApprovalMessage';
-import InactiveAccountMessage from '../../components/InactiveAccountMessage';
-import { AlertTriangle, MessageCircle } from 'lucide-react';
+import ClientActionButtons from '../../components/ClientActionButtons';
+import { LogOut } from 'lucide-react';
 
 interface ClientData {
+  name: string;
+  email: string;
+  driveLink?: string;
   status: string;
-  deactivationReason?: string;
 }
 
 export default function ClientDashboard() {
-  const { user, userRole } = useAuth();
-  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [clientData, setClientData] = useState<ClientData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (userRole !== 'client') {
-      navigate('/login');
-      return;
-    }
-
-    const checkClientStatus = async () => {
-      if (!user) return;
-
-      try {
-        const clientRef = doc(db, 'clients', user.uid);
-        const clientSnap = await getDoc(clientRef);
-
-        if (clientSnap.exists()) {
-          const data = clientSnap.data() as ClientData;
-          setClientData(data);
+    const fetchClientData = async () => {
+      if (user?.uid) {
+        try {
+          const docRef = doc(db, 'clients', user.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            setClientData(docSnap.data() as ClientData);
+          }
+        } catch (error) {
+          console.error('Error fetching client data:', error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error checking client status:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
-    checkClientStatus();
-  }, [userRole, user, navigate]);
+    fetchClientData();
+  }, [user?.uid]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
-  if (clientData?.status === 'pending') {
-    return <PendingApprovalMessage />;
-  }
-
   return (
-    <ClientLayout>
-      {clientData?.status === 'inactive' && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <AlertTriangle className="h-5 w-5 text-red-400" />
+    <div className="min-h-screen bg-gray-50">
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-semibold text-gray-800">
+                Dashboard do Cliente
+              </h1>
             </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">
-                <span className="font-medium">Conta Inativa: </span>
-                {clientData.deactivationReason || 'Sua conta está atualmente inativa.'}
-              </p>
-              <button
-                onClick={() => {
-                  const phoneNumber = '14981181568';
-                  const message = 'Olá, gostaria de solicitar a reativação da minha conta na Pixel Agência.';
-                  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                  window.open(whatsappUrl, '_blank');
-                }}
-                className="mt-2 text-sm text-green-600 hover:text-green-800 flex items-center space-x-1"
-              >
-                <MessageCircle size={16} />
-                <span>Entrar em Contato via WhatsApp</span>
-              </button>
-            </div>
+            <button
+              onClick={() => signOut()}
+              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              Sair
+            </button>
           </div>
         </div>
-      )}
-      <Routes>
-        <Route index element={<OrderList isInactive={clientData?.status === 'inactive'} />} />
-        <Route path="orders" element={<OrderList isInactive={clientData?.status === 'inactive'} />} />
-        <Route path="orders/new" element={
-          clientData?.status === 'inactive' ? (
-            <Navigate to="/client" replace />
-          ) : (
-            <OrderForm />
-          )
-        } />
-        <Route path="orders/:id" element={<OrderForm />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="*" element={<Navigate to="" replace />} />
-      </Routes>
-    </ClientLayout>
+      </nav>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              Bem-vindo, {clientData?.name}!
+            </h2>
+            <p className="text-gray-600">
+              {clientData?.email}
+            </p>
+          </div>
+
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Ações Rápidas
+            </h3>
+            <ClientActionButtons driveLink={clientData?.driveLink} />
+          </div>
+
+          {clientData?.status === 'pending' && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">
+                    Sua conta está em análise. Em breve você terá acesso completo à plataforma.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {clientData?.status === 'inactive' && (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <p className="text-sm text-red-700">
+                    Sua conta está inativa. Entre em contato conosco pelo WhatsApp para reativação.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
