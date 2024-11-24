@@ -152,6 +152,7 @@ export default function ClientForm() {
 
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Nome */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Nome
@@ -166,6 +167,7 @@ export default function ClientForm() {
             />
           </div>
 
+          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
@@ -181,6 +183,7 @@ export default function ClientForm() {
             />
           </div>
 
+          {/* Senha (apenas no cadastro) */}
           {!id && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -207,6 +210,7 @@ export default function ClientForm() {
             </div>
           )}
 
+          {/* Telefone */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Telefone
@@ -221,6 +225,7 @@ export default function ClientForm() {
             />
           </div>
 
+          {/* Status (apenas na edição) */}
           {id && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -239,6 +244,7 @@ export default function ClientForm() {
             </div>
           )}
 
+          {/* Link do Google Drive */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Link do Google Drive
@@ -262,6 +268,7 @@ export default function ClientForm() {
           </div>
         </div>
 
+        {/* Endereço */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Endereço
