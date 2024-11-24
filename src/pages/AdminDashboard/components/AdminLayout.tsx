@@ -44,10 +44,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-900">
       {/* Mobile Sidebar Toggle */}
       <button
-        className="fixed top-4 left-4 z-50 lg:hidden bg-white p-2 rounded-lg shadow-md"
+        className="fixed top-4 left-4 z-50 lg:hidden bg-gray-800 p-2 rounded-lg shadow-md text-gray-200"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
         {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
@@ -55,12 +55,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-gray-800 shadow-lg transform transition-transform duration-200 ease-in-out border-r border-gray-700
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
       >
         <div className="h-full flex flex-col">
           <div className="p-6">
-            <h1 className="text-2xl font-bold text-gray-800">Admin Panel</h1>
+            <h1 className="text-2xl font-bold text-gray-200">Admin Panel</h1>
           </div>
 
           <nav className="flex-1 px-4 space-y-2">
@@ -73,8 +73,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   to={item.path}
                   className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors
                     ${isActive 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-600 hover:bg-gray-50'}`}
+                      ? 'bg-blue-900 text-blue-200' 
+                      : 'text-gray-300 hover:bg-gray-700'}`}
                 >
                   {item.customIcon ? item.customIcon : Icon && <Icon size={20} />}
                   <span>{item.label}</span>
@@ -83,10 +83,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             })}
           </nav>
 
-          <div className="p-4 border-t">
+          <div className="p-4 border-t border-gray-700">
             <button
               onClick={handleSignOut}
-              className="flex items-center space-x-3 text-gray-600 hover:text-red-600 w-full px-4 py-3 rounded-lg transition-colors"
+              className="flex items-center space-x-3 text-gray-300 hover:text-red-400 w-full px-4 py-3 rounded-lg transition-colors"
             >
               <LogOut size={20} />
               <span>Sair</span>
