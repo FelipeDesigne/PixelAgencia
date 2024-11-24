@@ -3,7 +3,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Drive } from 'lucide-react';
+import { HardDrive } from 'lucide-react';
 
 interface ProfileData {
   name: string;
@@ -128,7 +128,7 @@ export default function Profile() {
                 Link do Google Drive
               </label>
               <div className="flex items-center space-x-2">
-                <Drive className="w-5 h-5 text-blue-600" />
+                <HardDrive className="w-5 h-5 text-blue-600" />
                 <input
                   type="url"
                   value={editedProfile?.driveLink || ''}
@@ -184,7 +184,7 @@ export default function Profile() {
             <div>
               <h3 className="text-sm font-medium text-gray-500">Link do Google Drive</h3>
               <div className="mt-1 flex items-center space-x-2">
-                <Drive className="w-5 h-5 text-blue-600" />
+                <HardDrive className="w-5 h-5 text-blue-600" />
                 {profile?.driveLink ? (
                   <a
                     href={profile.driveLink}

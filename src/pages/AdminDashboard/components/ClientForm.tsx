@@ -4,7 +4,7 @@ import { doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '../../../lib/firebase';
 import { toast } from 'react-hot-toast';
-import { ArrowLeft, Eye, EyeOff, Drive } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, HardDrive } from 'lucide-react';
 
 interface ClientFormData {
   name: string;
@@ -244,7 +244,7 @@ export default function ClientForm() {
               Link do Google Drive
             </label>
             <div className="flex items-center space-x-2">
-              <Drive className="w-5 h-5 text-blue-600" />
+              <HardDrive className="w-5 h-5 text-blue-600" />
               <input
                 type="url"
                 name="driveLink"
