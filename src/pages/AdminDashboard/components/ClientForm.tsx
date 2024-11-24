@@ -233,7 +233,7 @@ export default function ClientForm() {
                 value={formData.driveLink || ''}
                 onChange={handleChange}
                 placeholder="https://drive.google.com/drive/folders/..."
-                className="input-field"
+                className="flex-1 input-field"
               />
             </div>
             <p className="mt-1 text-sm text-gray-500">
