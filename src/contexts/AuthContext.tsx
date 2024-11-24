@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { useNavigate } from 'react-router-dom';
 
@@ -31,22 +31,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          const userDoc = await getDoc(doc(db, 'clients', firebaseUser.uid));
-          const userData = userDoc.data();
+          // Primeiro tenta buscar na coleção 'users'
+          let userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           
+          // Se não encontrar na coleção 'users', tenta na coleção 'clients'
+          if (!userDoc.exists()) {
+            userDoc = await getDoc(doc(db, 'clients', firebaseUser.uid));
+          }
+
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              role: userData?.role || 'client',
+              status: userData?.status || 'active'
+            });
+            setUserRole(userData?.role || 'client');
+            setUserStatus(userData?.status || 'active');
+          } else {
+            // Se não encontrar em nenhuma coleção, cria um documento padrão
+            const defaultUserData = {
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              role: 'client',
+              status: 'active',
+              createdAt: new Date().toISOString()
+            };
+            await setDoc(doc(db, 'clients', firebaseUser.uid), defaultUserData);
+            setUser(defaultUserData);
+            setUserRole('client');
+            setUserStatus('active');
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          // Em caso de erro, ainda mantém o usuário logado com dados básicos
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
-            role: userData?.role || null,
-            status: userData?.status || null
+            role: 'client',
+            status: 'active'
           });
-          setUserRole(userData?.role || null);
-          setUserStatus(userData?.status || null);
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          setUser(null);
-          setUserRole(null);
-          setUserStatus(null);
+          setUserRole('client');
+          setUserStatus('active');
         }
       } else {
         setUser(null);
@@ -61,26 +88,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const userDoc = await getDoc(doc(db, 'clients', userCredential.user.uid));
       
+      // Primeiro tenta buscar na coleção 'users'
+      let userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+      
+      // Se não encontrar na coleção 'users', tenta na coleção 'clients'
       if (!userDoc.exists()) {
-        throw new Error('Usuário não encontrado no banco de dados');
+        userDoc = await getDoc(doc(db, 'clients', userCredential.user.uid));
       }
 
-      const userData = userDoc.data();
+      let userData;
+      if (userDoc.exists()) {
+        userData = userDoc.data();
+      } else {
+        // Se não encontrar em nenhuma coleção, usa dados padrão
+        userData = {
+          role: 'client',
+          status: 'active'
+        };
+        await setDoc(doc(db, 'clients', userCredential.user.uid), {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          role: userData.role,
+          status: userData.status,
+          createdAt: new Date().toISOString()
+        });
+      }
+
       setUser({
         uid: userCredential.user.uid,
         email: userCredential.user.email,
-        role: userData.role,
-        status: userData.status
+        role: userData.role || 'client',
+        status: userData.status || 'active'
       });
-      setUserRole(userData.role);
-      setUserStatus(userData.status);
+      setUserRole(userData.role || 'client');
+      setUserStatus(userData.status || 'active');
 
       // Redirecionar com base no papel do usuário
       if (userData.role === 'admin') {
         navigate('/admin');
-      } else if (userData.role === 'client') {
+      } else {
         navigate('/client');
       }
     } catch (error: any) {
