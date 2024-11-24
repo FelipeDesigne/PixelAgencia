@@ -5,6 +5,7 @@ import AdminLayout from './components/AdminLayout';
 import ClientList from './components/ClientList';
 import ClientForm from './components/ClientForm';
 import OrderList from './components/OrderList';
+import { ArchivedOrders } from './components/ArchivedOrders';
 
 export default function AdminDashboard() {
   const { userRole } = useAuth();
@@ -23,6 +24,7 @@ export default function AdminDashboard() {
         <Route path="/client/new" element={<ClientForm />} />
         <Route path="/client/edit/:id" element={<ClientForm />} />
         <Route path="/orders" element={<OrderList />} />
+        <Route path="/orders/archived" element={<ArchivedOrders />} />
       </Routes>
     </AdminLayout>
   );

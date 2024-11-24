@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Users, Package, LogOut, Menu, X } from 'lucide-react';
+import { Users, Package, LogOut, Menu, X, FileText, Archive } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
@@ -35,12 +35,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   const navItems = [
-    { path: '/admin', icon: Users, label: 'Clientes' },
-    { 
-      path: '/admin/orders', 
-      label: 'Pedidos',
-      customIcon: <OrderNotification count={unviewedOrdersCount} />
+    {
+      path: '/admin',
+      label: 'Clientes',
+      icon: Users
     },
+    {
+      path: '/admin/orders',
+      label: 'Pedidos',
+      icon: FileText,
+      customIcon: unviewedOrdersCount > 0 ? (
+        <OrderNotification count={unviewedOrdersCount} />
+      ) : null
+    },
+    {
+      path: '/admin/orders/archived',
+      label: 'Arquivados',
+      icon: Archive
+    }
   ];
 
   return (
