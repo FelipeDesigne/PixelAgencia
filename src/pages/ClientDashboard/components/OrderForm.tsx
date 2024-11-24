@@ -79,7 +79,14 @@ export default function OrderForm() {
           status: (await getDoc(doc(db, 'orders', id))).data()?.status || 'pending',
         });
       } else {
-        await addDoc(collection(db, 'orders'), orderData);
+        // Criar documento do pedido no Firestore
+        await addDoc(collection(db, 'orders'), {
+          ...formData,
+          clientId: user.uid,
+          status: 'pending',
+          viewed: false,
+          createdAt: new Date().toISOString(),
+        });
       }
 
       toast.success(id ? 'Pedido atualizado com sucesso' : 'Pedido criado com sucesso');
