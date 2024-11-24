@@ -1,13 +1,13 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  User,
-  onAuthStateChanged,
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
   signInWithEmailAndPassword,
-  signOut as firebaseSignOut
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  User,
+  Auth
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { toast } from 'react-hot-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -17,84 +17,28 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const checkUserStatus = async (user: User) => {
-    // Verificar se é o email do admin
-    if (user.email === 'felipebdias98@gmail.com') {
-      return { role: 'admin', status: 'active' };
-    }
-
-    // Verificar o documento do cliente
-    const clientRef = doc(db, 'clients', user.uid);
-    const clientSnap = await getDoc(clientRef);
-
-    if (clientSnap.exists()) {
-      const clientData = clientSnap.data();
-      return { 
-        role: clientData.role,
-        status: clientData.status
-      };
-    }
-
-    // Se não encontrar documento do cliente, criar um documento de usuário padrão
-    const userRef = doc(db, 'users', user.uid);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      await setDoc(userRef, {
-        email: user.email,
-        role: 'client',
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-      return { role: 'client', status: 'pending' };
-    }
-
-    return { 
-      role: userSnap.data()?.role || 'client',
-      status: userSnap.data()?.status || 'pending'
-    };
-  };
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
       if (user) {
         try {
-          const { role, status } = await checkUserStatus(user);
-          
-          // Se for cliente e estiver pendente ou inativo, não permitir acesso
-          if (role === 'client' && status !== 'active') {
-            await firebaseSignOut(auth);
-            setUser(null);
-            setUserRole(null);
-            
-            if (status === 'pending') {
-              toast.error('Sua conta está pendente de aprovação. Por favor, aguarde.');
-            } else if (status === 'inactive') {
-              toast.error('Sua conta está inativa. Entre em contato com o administrador.');
-            }
-            return;
+          const userDoc = await getDoc(doc(db, 'clients', user.uid));
+          if (userDoc.exists()) {
+            setUserRole(userDoc.data().role || 'client');
           }
-
-          setUser(user);
-          setUserRole(role);
         } catch (error) {
-          console.error('Error setting up user:', error);
-          setUser(null);
-          setUserRole(null);
+          console.error('Error checking user role:', error);
         }
       } else {
-        setUser(null);
         setUserRole(null);
       }
-      
       setLoading(false);
     });
 
@@ -104,23 +48,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
+      // Primeiro, autenticar com Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Depois, buscar dados adicionais do usuário no Firestore
       const userDoc = await getDoc(doc(db, 'clients', userCredential.user.uid));
       
       if (!userDoc.exists()) {
-        throw new Error('Usuário não encontrado');
+        await firebaseSignOut(auth);
+        throw new Error('Usuário não encontrado no banco de dados');
       }
 
+      // Atualizar estados
       const userData = userDoc.data();
-      setUserRole(userData.role || 'client');
       setUser(userCredential.user);
-
-      return userCredential;
+      setUserRole(userData.role || 'client');
+      
     } catch (error: any) {
+      // Limpar estados em caso de erro
+      setUser(null);
+      setUserRole(null);
+      
+      // Tratar mensagens de erro específicas
       let message = 'Erro ao fazer login';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         message = 'E-mail ou senha incorretos';
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'E-mail inválido';
+      } else if (error.code === 'auth/too-many-requests') {
+        message = 'Muitas tentativas de login. Tente novamente mais tarde';
+      } else if (error.message) {
+        message = error.message;
       }
+      
       throw new Error(message);
     } finally {
       setLoading(false);
@@ -133,20 +93,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setUserRole(null);
     } catch (error) {
-      console.error('Signout error:', error);
-      throw error;
+      console.error('Error signing out:', error);
+      throw new Error('Erro ao fazer logout');
     }
   };
 
-  return (
-    <AuthContext.Provider value={{ user, userRole, loading, signIn, signOut }}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    user,
+    userRole,
+    loading,
+    signIn,
+    signOut,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
   return context;
-};
+}
