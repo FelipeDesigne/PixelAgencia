@@ -1,4 +1,4 @@
-import { MessageCircle, FolderGoogle } from 'lucide-react';
+import { MessageCircle, FolderOpen } from 'lucide-react';
 
 interface ClientActionButtonsProps {
   driveLink?: string;
@@ -35,7 +35,7 @@ export default function ClientActionButtons({
           onClick={handleDriveClick}
           className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
-          <FolderGoogle className="w-5 h-5" />
+          <FolderOpen className="w-5 h-5" />
           Google Drive
         </button>
       )}
