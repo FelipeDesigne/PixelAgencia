@@ -111,6 +111,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Usuário não encontrado');
       }
 
+      const userData = userDoc.data();
+      setUserRole(userData.role || 'client');
+      setUser(userCredential.user);
+
       return userCredential;
     } catch (error: any) {
       let message = 'Erro ao fazer login';
