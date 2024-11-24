@@ -3,6 +3,7 @@ import { collection, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore'
 import { db } from '../../../lib/firebase';
 import { toast } from 'react-hot-toast';
 import { Package, Eye } from 'lucide-react';
+import { ChatButton } from '../../../components/Chat/ChatButton';
 
 interface Order {
   id: string;
@@ -215,6 +216,9 @@ export default function OrderList() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Prazo de Entrega
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Chat
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -256,6 +260,9 @@ export default function OrderList() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(order.deliveryDate).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <ChatButton orderId={order.id} />
                   </td>
                 </tr>
               ))}

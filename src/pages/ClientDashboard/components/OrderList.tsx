@@ -5,6 +5,7 @@ import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Plus, Eye, Edit } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { ChatButton } from '../../../components/Chat/ChatButton';
 
 interface Order {
   id: string;
@@ -202,10 +203,7 @@ export default function OrderList({ isInactive }: OrderListProps) {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {orders.map((order) => (
-                    <tr 
-                      key={order.id} 
-                      className="hover:bg-gray-50"
-                    >
+                    <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
                         {order.title}
                       </td>
@@ -234,14 +232,10 @@ export default function OrderList({ isInactive }: OrderListProps) {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(order.deliveryDate)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <button
-                          onClick={() => navigate(`/client/orders/${order.id}`)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="Editar pedido"
-                        >
-                          <Edit size={18} />
-                        </button>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end space-x-2">
+                          <ChatButton orderId={order.id} />
+                        </div>
                       </td>
                     </tr>
                   ))}
