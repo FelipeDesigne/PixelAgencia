@@ -238,26 +238,26 @@ export default function ClientForm() {
               </select>
             </div>
           )}
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Link do Google Drive
-            </label>
-            <div className="flex items-center space-x-2">
-              <HardDrive className="w-5 h-5 text-blue-600" />
-              <input
-                type="url"
-                name="driveLink"
-                value={formData.driveLink || ''}
-                onChange={handleChange}
-                placeholder="https://drive.google.com/drive/folders/..."
-                className="input-field"
-              />
-            </div>
-            <p className="mt-1 text-sm text-gray-500">
-              Adicione o link da pasta compartilhada do Google Drive onde os arquivos do cliente serão armazenados.
-            </p>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Link do Google Drive
+          </label>
+          <div className="flex items-center space-x-2">
+            <HardDrive className="w-5 h-5 text-blue-600" />
+            <input
+              type="url"
+              name="driveLink"
+              value={formData.driveLink || ''}
+              onChange={handleChange}
+              placeholder="https://drive.google.com/drive/folders/..."
+              className="input-field"
+            />
           </div>
+          <p className="mt-1 text-sm text-gray-500">
+            Adicione o link da pasta compartilhada do Google Drive onde os arquivos do cliente serão armazenados.
+          </p>
         </div>
 
         <div>
